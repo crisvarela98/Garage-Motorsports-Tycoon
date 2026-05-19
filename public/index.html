@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Prueba Backend</title>
+    <style>
+      body { font-family: system-ui, Arial, sans-serif; padding: 2rem; }
+      #status { margin-top: 1rem; color: #333; }
+    </style>
+  </head>
+  <body>
+    <h1>Hola Mundo</h1>
+    <p>Este es un frontend simple que prueba la conexión al backend.</p>
+    <button id="check">Comprobar estado del backend</button>
+    <div id="status"></div>
+
+    <script>
+      document.getElementById('check').addEventListener('click', async () => {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = 'Consultando...';
+        try {
+          const res = await fetch('/api/status');
+          if (!res.ok) throw new Error(res.statusText);
+          const data = await res.json();
+          statusDiv.textContent = `Backend: ${data.message} — DB: ${data.db}`;
+        } catch (err) {
+          statusDiv.textContent = 'Error al conectar al backend: ' + err.message;
+        }
+      });
+    </script>
+  </body>
+</html>

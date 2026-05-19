@@ -1,0 +1,21 @@
+{
+  "name": "garage-motorsports-tycoon-backend",
+  "version": "1.0.0",
+  "description": "Backend simple en Node.js conectado a MongoDB para probar con un frontend HTML",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
