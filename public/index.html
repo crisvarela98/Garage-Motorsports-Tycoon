@@ -1,33 +1,309 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Prueba Backend</title>
-    <style>
-      body { font-family: system-ui, Arial, sans-serif; padding: 2rem; }
-      #status { margin-top: 1rem; color: #333; }
-    </style>
-  </head>
-  <body>
-    <h1>Hola Mundo</h1>
-    <p>Este es un frontend simple que prueba la conexión al backend.</p>
-    <button id="check">Comprobar estado del backend</button>
-    <div id="status"></div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Motorsport Garage Tycoon</title>
+    <link rel="icon" type="image/jpeg" href="assets/logojuego.jpg">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
 
-    <script>
-      document.getElementById('check').addEventListener('click', async () => {
-        const statusDiv = document.getElementById('status');
-        statusDiv.textContent = 'Consultando...';
-        try {
-          const res = await fetch('/api/status');
-          if (!res.ok) throw new Error(res.statusText);
-          const data = await res.json();
-          statusDiv.textContent = `Backend: ${data.message} — DB: ${data.db}`;
-        } catch (err) {
-          statusDiv.textContent = 'Error al conectar al backend: ' + err.message;
-        }
-      });
-    </script>
-  </body>
+<!-- ══ SPLASH SCREEN ══ -->
+<div id="splashScreen">
+    <div id="splashLogo1" class="splash-logo">
+        <img src="assets/milogo.jpg" alt="Studio Logo">
+    </div>
+    <div id="splashLogo2" class="splash-logo">
+        <img src="assets/logojuego.jpg" alt="Game Logo">
+    </div>
+</div>
+
+<div id="rotate-warning">
+    <div class="rw-icon">📱</div>
+    <div class="rw-title">Girá tu celular</div>
+    <div class="rw-sub">Motorsport Garage Tycoon está diseñado para pantalla vertical.<br>Por favor rotá tu dispositivo.</div>
+</div>
+
+<div id="notifications"></div>
+
+<div id="app">
+
+    <!-- ══════════════ DASHBOARD — GARAGE SCENE ══════════════ -->
+    <div class="screen active" id="dashboard">
+
+        <!-- Background -->
+        <img id="garageBg" src="assets/garage-bg.png" alt="">
+
+        <!-- ── TOP HUD ── -->
+        <div id="garageHud">
+
+            <!-- Player card (tap = profile sheet) -->
+            <div id="hudPlayerCard" onclick="openProfileSheet()">
+                <div class="hpc-top">
+                    <div class="hpc-avatar">👤</div>
+                    <div class="hpc-mid">
+                        <div class="hpc-name" id="hudPlayerName">Jugador</div>
+                        <div id="hudLevel" class="hpc-level">Nv.1</div>
+                    </div>
+                    <div class="hpc-chevron">›</div>
+                </div>
+                <div class="hpc-xp-row">
+                    <div class="hpc-xp-labels">
+                        <span>XP</span>
+                        <span id="hudXpLabel">0 / 1000</span>
+                    </div>
+                    <div class="hpc-xp"><div id="hudXpFill" class="hpc-xp-fill"></div></div>
+                </div>
+            </div>
+
+            <!-- Sponsors + Staff buttons -->
+            <div class="hud-mid-btns">
+                <button class="hud-top-btn hud-sponsor-btn" onclick="showScreen('sponsors')">
+                    <span class="htb-icon">💰</span>
+                    <span id="hudSponsorName" class="htb-label">Sponsors</span>
+                </button>
+                <button class="hud-top-btn hud-staff-btn" onclick="openStaffSheet()">
+                    <span class="htb-icon">👷</span>
+                    <span class="htb-label">Staff</span>
+                </button>
+            </div>
+
+            <!-- Currency column (right) — money top, diamonds below, watch-ad below diamonds -->
+            <div id="hudCurrency">
+                <div class="hud-money-box">
+                    <span class="hud-money-icon">💵</span>
+                    <span id="hudMoney">$0</span>
+                </div>
+                <div class="hud-diamonds-pill">
+                    <span class="hud-gem">💎</span>
+                    <span id="hudDiamonds">0</span>
+                </div>
+                <!-- Watch ad → earn 2 diamonds -->
+                <button class="hud-store-btn" onclick="AdsManager.offerRewardedAdToGetDiamonds()">
+                    <span class="hud-store-icon">📺</span>
+                    <span class="hud-store-label">+2💎</span>
+                </button>
+            </div>
+
+        </div><!-- /garageHud -->
+
+        <!-- ── GARAGE CAR VISUAL LAYER ── -->
+        <div id="garageCarLayer"></div>
+
+        <!-- Cloud sync badge -->
+        <div id="cloudSyncBadge" class="cloud-badge"></div>
+
+        <!-- ── SINGLE RECEIVE BUTTON (center floor) ── -->
+        <button id="recieveCarBtn" onclick="repair_car()">
+            <span class="rcv-icon">🚗</span>
+            <span class="rcv-label">Recibir Auto</span>
+            <div class="rcv-bar-wrap"><div class="rcv-bar" id="rcvBar"></div></div>
+        </button>
+
+        <!-- ── LEFT FLOATING BUTTONS (Taller + Carrera) ── -->
+        <div id="leftFabs">
+            <button class="lfab-btn" onclick="openWorkshopSheet()">
+                <span class="lfab-icon">🔧</span>
+                <span class="lfab-label">Taller</span>
+            </button>
+            <button class="lfab-btn lfab-carrera" onclick="showScreen('race')">
+                <span class="lfab-icon">🏁</span>
+                <span class="lfab-label">Carrera</span>
+            </button>
+        </div>
+
+        <!-- ── RIGHT FABs (Tasks + Truck + Tata Lion — 3-column) ── -->
+        <div id="rightFabs">
+            <button class="rfab-btn" id="tasksFab" onclick="openTasksOverlay()">
+                🎯<span id="tasksFabBadge" class="fab-badge" style="display:none">0</span>
+            </button>
+            <button class="rfab-btn" onclick="MiniGame.open()">🚛</button>
+            <button class="rfab-btn rfab-tata" id="tataFloatBtn" onclick="FTUEManager.tataPress()">
+                <img src="assets/tata-lion.png" alt="Tata">
+            </button>
+        </div>
+
+    </div><!-- /dashboard -->
+
+    <!-- ══════════════ OVERLAY SCREENS ══════════════ -->
+
+    <div class="screen overlay-screen" id="race">
+        <div class="overlay-header">
+            <button class="overlay-back" onclick="showScreen('dashboard')">← Atrás</button>
+            <span class="overlay-title">🏁 Carreras</span>
+            <span></span>
+        </div>
+        <div class="screen-inner" id="raceContent"></div>
+    </div>
+
+    <div class="screen overlay-screen" id="league">
+        <div class="overlay-header">
+            <button class="overlay-back" onclick="showScreen('dashboard')">← Atrás</button>
+            <span class="overlay-title">🏆 Liga</span>
+            <span></span>
+        </div>
+        <div class="screen-inner" id="leagueContent"></div>
+    </div>
+
+    <div class="screen overlay-screen" id="sponsors">
+        <div class="overlay-header">
+            <button class="overlay-back" onclick="showScreen('dashboard')">← Atrás</button>
+            <span class="overlay-title">🤝 Sponsors</span>
+            <span></span>
+        </div>
+        <div class="screen-inner" id="sponsorsContent"></div>
+    </div>
+
+    <div class="screen overlay-screen" id="profile">
+        <div class="overlay-header">
+            <button class="overlay-back" onclick="showScreen('dashboard')">← Atrás</button>
+            <span class="overlay-title">👤 Perfil</span>
+            <span></span>
+        </div>
+        <div class="screen-inner" id="profileContent"></div>
+    </div>
+
+    <!-- Leaderboard overlay -->
+    <div class="screen overlay-screen" id="leaderboard">
+        <div class="overlay-header">
+            <button class="overlay-back" onclick="showScreen('dashboard')">← Atrás</button>
+            <span class="overlay-title">🌍 Ranking Global</span>
+            <span></span>
+        </div>
+        <div class="screen-inner" id="leaderboardContent"></div>
+    </div>
+
+</div><!-- /app -->
+
+<!-- ══ WORKSHOP BOTTOM SHEET ══ -->
+<div id="workshopSheet" class="psheet-overlay" onclick="closeWorkshopSheet()">
+    <div class="psheet-panel psheet-panel-tall" onclick="event.stopPropagation()">
+        <div class="psheet-handle"></div>
+        <div class="psheet-header">
+            <span class="psheet-title">🔧 Taller</span>
+            <div class="psheet-header-right">
+                <div class="hud-money-box psheet-money">
+                    <span class="hud-money-icon">💵</span>
+                    <span id="workshopSheetMoney">$0</span>
+                </div>
+                <button class="psheet-close" onclick="closeWorkshopSheet()">✕</button>
+            </div>
+        </div>
+        <div class="psheet-body" id="workshopContent"></div>
+    </div>
+</div>
+
+<!-- ══ STAFF BOTTOM SHEET ══ -->
+<div id="staffSheet" class="psheet-overlay" onclick="closeStaffSheet()">
+    <div class="psheet-panel psheet-panel-tall" onclick="event.stopPropagation()">
+        <div class="psheet-handle"></div>
+        <div class="psheet-header">
+            <span class="psheet-title">👷 Staff</span>
+            <div class="psheet-header-right">
+                <div class="hud-money-box psheet-money">
+                    <span class="hud-money-icon">💵</span>
+                    <span id="staffSheetMoney">$0</span>
+                </div>
+                <button class="psheet-close" onclick="closeStaffSheet()">✕</button>
+            </div>
+        </div>
+        <div class="psheet-body" id="employeesContent"></div>
+    </div>
+</div>
+
+<!-- ══ PROFILE BOTTOM SHEET ══ -->
+<div id="profileSheet" class="psheet-overlay" onclick="closeProfileSheet()">
+    <div class="psheet-panel" onclick="event.stopPropagation()">
+        <div class="psheet-handle"></div>
+        <div class="psheet-header">
+            <span class="psheet-title">👤 Mi Perfil</span>
+            <button class="psheet-close" onclick="closeProfileSheet()">✕</button>
+        </div>
+        <div class="psheet-body" id="profileSheetBody"></div>
+    </div>
+</div>
+
+<!-- Tasks overlay -->
+<div id="tasksOverlay" class="tasks-overlay">
+    <div class="tasks-overlay-panel">
+        <div class="tov-header">
+            <span class="tov-title">📋 Tareas</span>
+            <button class="tov-close" onclick="closeTasksOverlay()">✕</button>
+        </div>
+        <div class="tov-tabs">
+            <button class="tov-tab tov-tab-active" data-tab="daily" onclick="_setTasksTab('daily')">⏱ Diarias</button>
+            <button class="tov-tab" data-tab="super" onclick="_setTasksTab('super')">💎 Súper tareas</button>
+        </div>
+        <div id="tasksOverlayBody" class="tov-body"></div>
+    </div>
+</div>
+
+<!-- Mini-game overlay -->
+<div id="minigameOverlay" class="minigame-overlay">
+    <div class="mg-panel">
+        <div class="mg-panel-hdr">
+            <button class="mg-close-btn" onclick="MiniGame.close()">✕ Salir</button>
+            <span class="mg-panel-title">🚛 CAMIÓN CIUDAD</span>
+            <span></span>
+        </div>
+        <div id="mgGameArea" class="mg-game-area"></div>
+    </div>
+</div>
+
+<!-- Core -->
+<script src="js/core/gameState.js"></script>
+<script src="js/core/saveSystem.js"></script>
+<script src="js/core/cloudSave.js"></script>
+<script src="js/core/notifications.js"></script>
+
+<!-- Modules -->
+<script src="js/modules/economy.js"></script>
+<script src="js/modules/vehicles.js"></script>
+<script src="js/modules/leagues.js"></script>
+<script src="js/modules/upgrades.js"></script>
+<script src="js/modules/workshop.js"></script>
+<script src="js/modules/races.js"></script>
+<script src="js/modules/employees.js"></script>
+<script src="js/modules/sponsors.js"></script>
+<script src="js/modules/offline.js"></script>
+<script src="js/modules/tasks.js"></script>
+<script src="js/modules/minigame.js"></script>
+
+<!-- Features -->
+<script src="js/features/monetization.js"></script>
+<script src="js/features/ftue.js"></script>
+
+<!-- App -->
+<script src="js/app.js"></script>
+
+<!-- Splash screen sequencer — runs before app init -->
+<script>
+(function() {
+    var el1 = document.getElementById('splashLogo1');
+    var el2 = document.getElementById('splashLogo2');
+    var screen = document.getElementById('splashScreen');
+
+    function removeSplash() {
+        screen.classList.add('splash-out');
+        setTimeout(function() { screen.style.display = 'none'; }, 420);
+    }
+
+    el1.classList.add('splash-show');
+    setTimeout(function() {
+        el1.classList.remove('splash-show');
+        el1.classList.add('splash-hide');
+        setTimeout(function() {
+            el2.classList.add('splash-show');
+            setTimeout(function() {
+                el2.classList.remove('splash-show');
+                el2.classList.add('splash-hide');
+                setTimeout(removeSplash, 370);
+            }, 1500);
+        }, 370);
+    }, 1500);
+})();
+</script>
+
+</body>
 </html>
