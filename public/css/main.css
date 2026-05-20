@@ -1,6 +1,30 @@
 /* ── Reset ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Ensure full-viewport root and safe-area insets */
+html, body {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    margin: 0;
+    background: #04070f;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.ftue-hidden {
+    display: none !important;
+}
+
 /* ══════════════════════════════════════════════════════════════════
    SPLASH SCREEN
    ══════════════════════════════════════════════════════════════════ */
@@ -83,7 +107,8 @@
     pointer-events: none;
 }
 
-/* ── TOP HUD ── */
+/* Fallback when background image can't reach full width: center and letterbox */
+#dashboard { background-color: #04070f; }
 #garageHud {
     position: absolute;
     top: 0;
@@ -1599,19 +1624,28 @@ html, body {
     to   { transform: translateY(-8px); opacity: 1; }
 }
 
-/* Panel lives at the bottom, pointer-events only on bubble */
+/* Panel lives at the top center to avoid hiding buttons */
 .ftue-panel {
     position: absolute;
-    bottom: 0; left: 0; right: 0;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    align-items: flex-end;
-    padding: 0 10px calc(12px + env(safe-area-inset-bottom, 0px));
+    justify-content: center;
+    width: min(92%, 360px);
     pointer-events: all;
-    animation: ftue-slide-up 0.38s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation: ftue-slide-down 0.38s cubic-bezier(0.34, 1.4, 0.64, 1) both;
 }
-@keyframes ftue-slide-up {
-    from { transform: translateY(110%); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+.ftue-panel--floating {
+    left: auto;
+    right: 8%;
+    top: 6%;
+    transform: none;
+    width: min(300px, 90%);
+}
+@keyframes ftue-slide-down {
+    from { transform: translate(-50%, -16px); opacity: 0; }
+    to   { transform: translate(-50%, 0); opacity: 1; }
 }
 .ftue-bubble {
     flex: 1;
@@ -1646,10 +1680,6 @@ html, body {
     transition: all 0.3s;
 }
 .ftue-dot-active { width: 18px; border-radius: 3px; background: var(--diamond); }
-.ftue-skip-btn {
-    background: none; border: none; color: var(--text-muted);
-    font-size: 10px; cursor: pointer; font-family: var(--font); padding: 0;
-}
 .ftue-footer-right {
     display: flex;
     flex-direction: column;
@@ -1672,11 +1702,22 @@ html, body {
 }
 .ftue-next-btn:hover  { background: #2563eb; }
 .ftue-next-btn:active { transform: scale(0.94); }
+.ftue-next-btn:disabled {
+    background: rgba(37,99,235,0.45);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 .ftue-character { width: 110px; flex-shrink: 0; align-self: flex-end; position: relative; z-index: 1; }
 .ftue-character img { width: 100%; display: block; filter: drop-shadow(0 6px 20px rgba(0,0,0,0.7)); }
 
 /* ── Profile modal — Tata Lion intro ────────────────────────── */
 .pm-tata-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.profile-note {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
 .pm-tata-img { width: 72px; flex-shrink: 0; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.6)); }
 .pm-tata-speech {
     flex: 1;
