@@ -80,9 +80,9 @@ const FTUEManager = (() => {
 
     // Level tips shown after FTUE is done
     const LEVEL_TIPS = {
-        5:  { title: '¡Conseguí un sponsor!',     hint: 'Tocá 💰 Sponsors arriba. Un sponsor te da más dinero en cada carrera.' },
+        5:  { title: '¡Moto desbloqueada pronto!', hint: 'Al nivel 5 desbloqueás la Moto de Carreras. Empezá a ahorrar.' },
         10: { title: '¡Mejorá el taller!',         hint: 'Tocá 🔧 Taller → Garage. Las Herramientas Pro aceleran reparaciones.' },
-        15: { title: '¡Moto desbloqueada pronto!', hint: 'Al nivel 15 desbloqueás la Moto de Carreras. Empezá a ahorrar.' },
+        15: { title: '¡Conseguí un sponsor!',     hint: 'Tocá 💰 Sponsors arriba. Un sponsor te da más dinero en cada carrera.' },
         20: { title: '¡Completá tus tareas!',       hint: 'Tocá 🎯 arriba a la derecha. Las tareas diarias te dan XP gratis.' },
     };
 
@@ -312,13 +312,28 @@ const FTUEManager = (() => {
                     <div class="pm-speech-text">¡Excelente trabajo. Antes de continuar, quiero saber cómo te llamás y cómo querés llamar a tu taller.</div>
                 </div>
             </div>
-            <label class="profile-label">Tu nombre</label>
-            <input class="profile-input" id="ftuePlayerName" placeholder="Ej: Carlos" maxlength="24">
-            <div class="profile-note">Este será tu nombre dentro del juego.</div>
-            <label class="profile-label">Nombre de tu garage</label>
-            <input class="profile-input" id="ftueGarageName" placeholder="Ej: Scuderia Veloz" maxlength="32">
-            <div class="profile-note">Poné un nombre único para tu taller. Podés cambiarlo después.</div>
-            <button class="rbtn accent-btn pm-start-btn" onclick="FTUEManager.submitName()">🏁 Guardar y empezar</button>
+                <label class="profile-label">Tu nombre</label>
+                <input class="profile-input" id="ftuePlayerName" placeholder="Ej: Carlos" maxlength="24">
+                <div class="profile-note">Este será tu nombre dentro del juego.</div>
+
+                <label class="profile-label">Edad</label>
+                <select id="ftuePlayerAge" class="profile-input">
+                    <option value="">Seleccioná tu edad</option>
+                    ${Array.from({length:63},(_,i)=>`<option value="${i+13}">${i+13}</option>`).join('')}
+                </select>
+
+                <label class="profile-label">Nombre de tu garage</label>
+                <input class="profile-input" id="ftueGarageName" placeholder="Ej: Scuderia Veloz" maxlength="32">
+                <div class="profile-note">Poné un nombre único para tu taller. Podés cambiarlo después.</div>
+
+                <div style="margin-top:8px;display:flex;gap:8px;flex-direction:column">
+                    <div>
+                        <button class="rbtn" id="ftueFollowBtn" onclick="FTUEManager.openInstagramFollow()">Seguir en Instagram (@tatalion_game)</button>
+                    </div>
+                    <div style="font-size:12px;color:#777">Se abrirá la autorización de Instagram. Al regresar, recibirás 50 diamantes automático si el proceso se completa.</div>
+                </div>
+
+                <button class="rbtn accent-btn pm-start-btn" onclick="FTUEManager.submitName()">🏁 Guardar y empezar</button>
         </div>`;
         document.body.appendChild(overlay);
         setTimeout(() => { const i = document.getElementById('ftuePlayerName'); if (i) i.focus(); }, 100);
@@ -329,6 +344,9 @@ const FTUEManager = (() => {
         const g = document.getElementById('ftueGarageName');
         game.playerName = (n && n.value.trim()) || 'Jugador';
         game.garageName = (g && g.value.trim()) || 'Mi Garage';
+
+        const ageEl = document.getElementById('ftuePlayerAge');
+        if (ageEl && ageEl.value) game.playerAge = parseInt(ageEl.value, 10);
 
         const modal = document.getElementById('ftue-name-modal');
         if (modal) modal.remove();
@@ -348,6 +366,9 @@ const FTUEManager = (() => {
         { title: '🎯 Tareas diarias',         hint: 'Las tareas del 🎯 se resetean cada día. Son la forma más fácil de ganar XP.' },
         { title: '🚛 Minijuego',              hint: 'El camión da $150 por segundo. ¡En 30 segundos podés ganar $4,500!' },
         { title: '⭐ Autos Estrella',         hint: 'Los autos raros (⭐) pagan $1,800+ pero tardan más. Un video los completa al instante.' },
+        { title: '🔧 Ahorra piezas',         hint: 'Subí Stock de repuestos para reducir tiempos de reparación.' },
+        { title: '🕒 Gestión de tiempo',     hint: 'Prioriza tareas y repasos rápidos para mantener flujo de ingresos.' },
+        { title: '📈 Reputación',            hint: 'La reputación te ayuda a conseguir mejores rivales y ofertas de sponsor.' }
     ];
     let _tipIdx = 0;
     function _showRandomTip() {
@@ -406,6 +427,17 @@ const FTUEManager = (() => {
         isCompleted: isDone,
         currentStep: step,
         showTip: _showTip,
+
+        // Instagram follow helpers
+        openInstagramFollow() {
+            // Redirect to server OAuth start with device id
+            try {
+                const deviceId = (window.CloudSave && CloudSave.getDeviceId()) || '';
+                window.location.href = '/auth/instagram?device_id=' + encodeURIComponent(deviceId);
+            } catch (e) {
+                try { window.open('https://instagram.com/tatalion_game', '_blank'); } catch(e){}
+            }
+        },
 
         // Event hooks called from game modules
         onProfileSaved()  { /* name is now asked at end, not start */ },

@@ -154,9 +154,34 @@ function renderVehiclesTab() {
             <div class="vc-upgrades">
                 <div class="race-divider" style="margin-top:6px">MEJORAS</div>
                 ${partsHtml}
+                <div style="margin-top:8px"> 
+                    <button class="rbtn" onclick="testVehicle('${def.id}')">🔄 Test de rendimiento</button>
+                </div>
             </div>
         </div>`;
     }).join("");
 
     el.innerHTML = html;
 }
+
+    // Launch a quick dyno test for any vehicle
+    function testVehicle(vehicleId) {
+        const def = VEHICLE_CATALOG[vehicleId];
+        if (!def) return;
+        const owned = game.vehicles[vehicleId] && game.vehicles[vehicleId].owned;
+        if (!owned) { notifyWarn('Vehículo no desbloqueado'); return; }
+
+        // Try to use getVehicleStats if available
+        let stats = null;
+        if (typeof getVehicleStats === 'function') stats = getVehicleStats(vehicleId);
+        const hp = stats ? stats.hp : 400;
+        const tq = stats ? stats.torque : Math.round(hp * 1.36);
+
+        if (window.startDyno) {
+            startDyno(vehicleId, hp, tq, def.icon || '🚗');
+        } else if (typeof runDynoTest === 'function') {
+            runDynoTest();
+        } else {
+            notify('No hay soporte de rodillo disponible');
+        }
+    }

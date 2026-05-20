@@ -86,8 +86,10 @@ function renderLeague() {
     if (RaceManager && RaceManager.state.leagueMode && RaceManager.state.phase !== "menu") return;
 
     const ownedVehicles = Object.entries(VEHICLE_CATALOG).filter(([id]) => game.vehicles[id]?.owned);
+    // Only show vehicles that have a league configured
+    const leagueVehicles = ownedVehicles.filter(([id, def]) => def.leagueId);
 
-    const tabsHtml = ownedVehicles.map(([id, def]) => `
+    const tabsHtml = leagueVehicles.map(([id, def]) => `
         <button class="wtab ${leagueTab === id ? "wtab-active" : ""}"
                 onclick="setLeagueTab('${id}')"
                 style="${leagueTab === id ? `border-bottom-color:${def.color}` : ""}">
@@ -95,7 +97,9 @@ function renderLeague() {
         </button>
     `).join("");
 
-    const vehicleId = leagueTab;
+    // Ensure leagueTab points to a vehicle that actually has a league
+    const vehicleId = VEHICLE_CATALOG[leagueTab] && VEHICLE_CATALOG[leagueTab].leagueId ? leagueTab : (leagueVehicles[0] ? leagueVehicles[0][0] : null);
+    if (!vehicleId) { el.innerHTML = '<div class="empty-row">No hay ligas disponibles</div>'; return; }
     const def       = VEHICLE_CATALOG[vehicleId];
     const sorted    = LeagueManager.getStandings(vehicleId);
     const playerPts = LeagueManager.getPlayerPoints(vehicleId);

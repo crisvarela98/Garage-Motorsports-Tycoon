@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
+const axios = require('axios');
 
 // Cargar .env desde la raiz del proyecto
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -172,6 +173,62 @@ app.get('/api/leaderboard', async (req, res) => {
   } catch (err) {
     console.error('Error en /api/leaderboard:', err);
     res.status(500).json({ ok: false, error: 'Error interno' });
+  }
+});
+
+// Instagram OAuth endpoints
+const INSTAGRAM_CLIENT_ID = process.env.INSTAGRAM_CLIENT_ID;
+const INSTAGRAM_CLIENT_SECRET = process.env.INSTAGRAM_CLIENT_SECRET;
+const INSTAGRAM_REDIRECT_URI = process.env.INSTAGRAM_REDIRECT_URI || `http://localhost:${PORT}/auth/instagram/callback`;
+
+app.get('/auth/instagram', (req, res) => {
+  const deviceId = req.query.device_id || '';
+  if (!INSTAGRAM_CLIENT_ID || !INSTAGRAM_CLIENT_SECRET) {
+    return res.status(500).send('Instagram OAuth no configurado en el servidor');
+  }
+  const state = encodeURIComponent(deviceId);
+  const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}&scope=user_profile&response_type=code&state=${state}`;
+  res.redirect(authUrl);
+});
+
+app.get('/auth/instagram/callback', async (req, res) => {
+  const code = req.query.code;
+  const state = req.query.state;
+  if (!code) return res.status(400).send('Missing code');
+  try {
+    const body = new URLSearchParams({
+      client_id: INSTAGRAM_CLIENT_ID,
+      client_secret: INSTAGRAM_CLIENT_SECRET,
+      grant_type: 'authorization_code',
+      redirect_uri: INSTAGRAM_REDIRECT_URI,
+      code
+    }).toString();
+
+    const tokenResp = await axios.post('https://api.instagram.com/oauth/access_token', body, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const access_token = tokenResp.data.access_token;
+    const user_id = tokenResp.data.user_id;
+
+    const profileResp = await axios.get(`https://graph.instagram.com/${user_id}?fields=id,username&access_token=${access_token}`);
+    const username = profileResp.data.username;
+
+    const deviceId = state || '';
+    if (deviceId) {
+      const player = await Player.findOne({ device_id: deviceId });
+      const gameObj = (player && player.game) || {};
+      gameObj.instagram = { id: user_id, username, authedAt: new Date() };
+      gameObj.diamonds = (gameObj.diamonds || 0) + 50;
+      gameObj.lastTime = Date.now();
+      await Player.findOneAndUpdate(
+        { device_id: deviceId },
+        { $set: { game: gameObj, player_name: player ? player.player_name : 'Jugador' } },
+        { upsert: true }
+      );
+    }
+
+    return res.redirect(`/?ig_auth=success&ig_username=${encodeURIComponent(username)}`);
+  } catch (err) {
+    console.error('Instagram callback error', err?.response?.data || err.message);
+    return res.redirect('/?ig_auth=error');
   }
 });
 

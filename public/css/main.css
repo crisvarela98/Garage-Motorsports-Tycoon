@@ -1559,6 +1559,132 @@ html, body {
     gap: 12px;
     box-shadow: 0 24px 64px rgba(0,0,0,0.8);
 }
+.dyno-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 11000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+.dyno-modal-panel {
+    width: min(760px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 32px 72px rgba(0,0,0,0.7);
+}
+.dyno-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.dyno-title {
+    font-size: 18px;
+    font-weight: 800;
+}
+.dyno-subtitle {
+    font-size: 13px;
+    color: var(--text-sub);
+}
+.dyno-modal-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 16px;
+}
+.dyno-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.dyno-vehicle-img {
+    width: 100%;
+    max-width: 360px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: #111;
+    object-fit: cover;
+}
+.dyno-preview-label {
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+.dyno-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.dyno-graph-card {
+    padding: 12px;
+    background: var(--surface3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+.dyno-graph-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+.dyno-chart {
+    width: 100%;
+    height: 160px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+}
+.dyno-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-sub);
+}
+.dyno-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.hp-dot { background: #3b82f6; }
+.tq-dot { background: #f97316; }
+.dyno-values {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.dyno-value-card {
+    padding: 12px;
+    background: var(--surface3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+.dyno-value-label {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+}
+.dyno-value-num {
+    font-size: 24px;
+    font-weight: 900;
+}
+.dyno-close-btn {
+    min-width: auto;
+    padding: 8px 14px;
+}
+
 .pm-title    { font-size: 21px; font-weight: 900; text-align: center; }
 .pm-subtitle { font-size: 13px; color: var(--text-sub); text-align: center; }
 .pm-start-btn { margin-top: 4px; }

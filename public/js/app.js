@@ -422,6 +422,29 @@ function escHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function handleInstagramAuthResult() {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('ig_auth');
+    const username = params.get('ig_username');
+    if (!result) return;
+
+    if (result === 'success') {
+        if (!localStorage.getItem('mgt_ig_followed')) {
+            game.diamonds = (game.diamonds || 0) + 50;
+            game.instagramFollow = { username: username || 'tatalion_game', authedAt: Date.now() };
+            localStorage.setItem('mgt_ig_followed', '1');
+            notifySuccess('¡Instagram vinculado! 50 diamantes acreditados.');
+            updateGarageHud();
+            save_user_progress();
+        } else {
+            notifySuccess('Instagram ya vinculado. Gracias de nuevo.');
+        }
+    } else if (result === 'error') {
+        notifyWarn('No se pudo completar la conexión con Instagram. Intentá de nuevo.');
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+
 // ── Init ──────────────────────────────────────────────────────────
 async function init() {
     load_user_progress();
@@ -437,6 +460,7 @@ async function init() {
 
     if (window.FTUEManager) FTUEManager.init();
     if (window.TaskManager) TaskManager.init();
+    handleInstagramAuthResult();
     // Profile modal is now shown at the END of the FTUE, not at the start.
     // Only show it if FTUE was already completed and player somehow has no name.
     if (!game.playerName && game.ftue && game.ftue.completed) showProfileModal();

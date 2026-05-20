@@ -63,39 +63,138 @@ function upgradePart(key) { tune_car(key); }
 let dynoRunning = false;
 
 function runDynoTest() {
+    startDyno('car', getCarHP(), getCarTorque(), '🏎');
+}
+
+// Generic dyno runner with simple WebAudio engine-like sound and floating info modal
+function startDyno(vehicleId, hp, torque, icon) {
     if (dynoRunning) return;
     dynoRunning = true;
 
-    const hp     = getCarHP();
-    const torque = getCarTorque();
+    const def = (window.VEHICLE_CATALOG && VEHICLE_CATALOG[vehicleId]) || { name: 'Vehículo', icon };
+    const imageMap = {
+        car: 'assets/car_red.png',
+        moto: 'assets/car_yellow.png',
+        rally: 'assets/car_green.png',
+        formula: 'assets/car_green.png'
+    };
+    const imageSrc = imageMap[vehicleId] || 'assets/car_red.png';
+    const chartMaxHP = 1200;
+    const chartMaxTQ = 1600;
+    const hpY = 120 - Math.min(96, Math.round((Math.min(hp, chartMaxHP) / chartMaxHP) * 96));
+    const tqY = 120 - Math.min(96, Math.round((Math.min(torque, chartMaxTQ) / chartMaxTQ) * 96));
 
-    const carEl = document.getElementById("dynoCar");
-    const roll1 = document.getElementById("dynoRoll1");
-    const roll2 = document.getElementById("dynoRoll2");
-    const hpEl  = document.getElementById("dynoHP");
-    const tqEl  = document.getElementById("dynoTQ");
+    let interval;
+    let modal = document.getElementById('dynoModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'dynoModal';
+        modal.className = 'dyno-modal-overlay';
+        modal.innerHTML = `
+            <div class="dyno-modal-panel">
+                <div class="dyno-modal-header">
+                    <div>
+                        <div class="dyno-title">Test de rendimiento</div>
+                        <div class="dyno-subtitle">${def.icon || icon} ${def.name}</div>
+                    </div>
+                    <button class="rbtn dyno-close-btn" id="dynoCloseBtn">Cerrar</button>
+                </div>
+                <div class="dyno-modal-grid">
+                    <div class="dyno-preview">
+                        <img id="dynoVehicleImg" class="dyno-vehicle-img" src="${imageSrc}" alt="${def.name}">
+                        <div class="dyno-preview-label">${def.name}</div>
+                    </div>
+                    <div class="dyno-sidebar">
+                        <div class="dyno-graph-card">
+                            <div class="dyno-graph-title">Gráfico de rendimiento</div>
+                            <svg class="dyno-chart" viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 120 L20 18 L210 18" stroke="#4b5563" stroke-width="2" fill="none" opacity="0.35" />
+                                <path d="M20 120 L210 ${hpY}" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round" />
+                                <path d="M20 120 L210 ${tqY}" stroke="#f97316" stroke-width="4" fill="none" stroke-linecap="round" />
+                                <circle cx="210" cy="${hpY}" r="5" fill="#3b82f6" />
+                                <circle cx="210" cy="${tqY}" r="5" fill="#f97316" />
+                                <text x="24" y="18" font-size="10" fill="#9ca3af">0</text>
+                                <text x="24" y="132" font-size="10" fill="#9ca3af">${chartMaxHP}</text>
+                            </svg>
+                            <div class="dyno-legend">
+                                <span class="dyno-legend-item"><span class="legend-dot hp-dot"></span> HP</span>
+                                <span class="dyno-legend-item"><span class="legend-dot tq-dot"></span> Torque</span>
+                            </div>
+                        </div>
+                        <div class="dyno-values">
+                            <div class="dyno-value-card">
+                                <div class="dyno-value-label">HP actual</div>
+                                <div class="dyno-value-num" id="dynoHP">0</div>
+                            </div>
+                            <div class="dyno-value-card">
+                                <div class="dyno-value-label">Torque actual</div>
+                                <div class="dyno-value-num" id="dynoTQ">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        (document.getElementById('app') || document.body).appendChild(modal);
+        document.getElementById('dynoCloseBtn').onclick = () => {
+            modal.remove();
+            if (interval) clearInterval(interval);
+            dynoRunning = false;
+        };
+    }
 
-    if (carEl) carEl.classList.add("dyno-shaking");
-    if (roll1) roll1.classList.add("spinning");
-    if (roll2) roll2.classList.add("spinning");
+    const carEl = document.getElementById('dynoVehicleImg');
+    const hpEl = document.getElementById('dynoHP');
+    const tqEl = document.getElementById('dynoTQ');
+    const title = modal.querySelector('.dyno-subtitle');
+    if (title) title.textContent = `${def.icon || icon} ${def.name}`;
+    if (carEl) carEl.src = imageSrc;
 
-    let cur      = 0;
-    const step   = Math.max(1, Math.ceil(hp / 50));
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(hp / 50));
+
+    let audioCtx, osc, gain;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        const baseFreq = 100 + Math.min(800, Math.round(hp * 0.3));
+        osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.05);
+        osc.frequency.linearRampToValueAtTime(baseFreq * 1.9, audioCtx.currentTime + 1.2);
+    } catch (e) {
+        audioCtx = null;
+    }
+
     const interval = setInterval(() => {
         cur = Math.min(cur + step, hp);
         if (hpEl) hpEl.textContent = cur;
-        if (tqEl) tqEl.textContent = Math.round(cur * 1.36);
+        if (tqEl) tqEl.textContent = Math.round(torque * (cur / hp));
         if (cur >= hp) {
             clearInterval(interval);
             setTimeout(() => {
-                if (carEl) carEl.classList.remove("dyno-shaking");
-                if (roll1) roll1.classList.remove("spinning");
-                if (roll2) roll2.classList.remove("spinning");
                 dynoRunning = false;
-            }, 1200);
+                if (audioCtx && osc && gain) {
+                    gain.gain.cancelScheduledValues(audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+                    setTimeout(() => { try { osc.stop(); audioCtx.close(); } catch (e) {} }, 700);
+                }
+            }, 800);
+        } else {
+            if (audioCtx && osc) {
+                const t = cur / hp;
+                const freq = (100 + Math.min(800, Math.round(hp * 0.3))) * (1 + t * 1.5);
+                try { osc.frequency.linearRampToValueAtTime(freq, audioCtx.currentTime + 0.1); } catch (e) {}
+            }
         }
     }, 40);
 }
+
+window.startDyno = startDyno;
 
 function renderCarUpgrades() {
     const el = document.getElementById("carContent");

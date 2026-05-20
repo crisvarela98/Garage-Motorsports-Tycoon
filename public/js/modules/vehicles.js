@@ -7,7 +7,7 @@ const VEHICLE_CATALOG = {
         icon:         "🚗",
         color:        "#3b82f6",
         unlockLevel:  1,
-        leagueId:     "car",
+        leagueId:     null,
         basePace:     92,
         baseStats:    { hp: 250, torque: 340, cv: 253 },
         lapLabel:     "Vuelta",
@@ -19,7 +19,7 @@ const VEHICLE_CATALOG = {
         name:         "Moto de Carreras",
         icon:         "🏍",
         color:        "#f97316",
-        unlockLevel:  15,
+        unlockLevel:  5,
         leagueId:     "moto",
         basePace:     65,
         baseStats:    { hp: 200, torque: 120, cv: 203 },
@@ -32,7 +32,7 @@ const VEHICLE_CATALOG = {
         name:         "Camioneta Rally",
         icon:         "🚙",
         color:        "#22c55e",
-        unlockLevel:  30,
+        unlockLevel:  20,
         leagueId:     "rally",
         basePace:     105,
         baseStats:    { hp: 450, torque: 610, cv: 456 },
@@ -45,7 +45,7 @@ const VEHICLE_CATALOG = {
         name:         "Monoplaza Fórmula",
         icon:         "🏎",
         color:        "#e11d48",
-        unlockLevel:  50,
+        unlockLevel:  40,
         leagueId:     "formula",
         basePace:     80,
         baseStats:    { hp: 1000, torque: 400, cv: 1014 },
@@ -62,44 +62,40 @@ const VEHICLE_CATALOG = {
 // basePace = lap time in seconds; HIGHER = slower
 const VEHICLE_RIVALS = {
     car: [
-        { name: "Lanston",  basePace: 89  },   // fast — needs Motor Lv2 to beat
-        { name: "Velstra",  basePace: 91  },   // fast — needs Motor Lv1+
-        { name: "Laclair",  basePace: 94  },   // medium — close battle from start
-        { name: "Noris",    basePace: 96  },   // medium — beatable early
-        { name: "Saenz",    basePace: 98  },   // medium — beatable fresh
-        { name: "Reston",   basePace: 101 },   // slow — easy win from start
-        { name: "Alende",   basePace: 103 },   // slow
-        { name: "Peraza",   basePace: 106 },   // backmarker
+        { name: "Marquez",  basePace: 89 },
+        { name: "Cortés",   basePace: 90 },
+        { name: "Roldán",   basePace: 92 },
+        { name: "Varela",   basePace: 94 },
+        { name: "Sánchez",  basePace: 96 },
+        { name: "Delgado",  basePace: 99 },
+        { name: "Herrero",  basePace: 101 },
+        { name: "Pérez",    basePace: 103 },
+        { name: "Molina",   basePace: 107 }
     ],
     moto: [
-        { name: "Markes",    basePace: 54 },
-        { name: "Padagna",   basePace: 55 },
-        { name: "Quartetti", basePace: 56 },
-        { name: "Brinder",   basePace: 57 },
-        { name: "Venales",   basePace: 57 },
-        { name: "Zarko",     basePace: 58 },
-        { name: "Muller",    basePace: 58 },
-        { name: "Bastini",   basePace: 56 },
+        { name: "Álvarez",   basePace: 52 }, { name: "Benetti",   basePace: 52 },
+        { name: "Cavani",    basePace: 53 }, { name: "Duarte",    basePace: 54 },
+        { name: "Estevez",   basePace: 54 }, { name: "Fior",      basePace: 55 },
+        { name: "Garci",     basePace: 55 }, { name: "Hernan",    basePace: 56 },
+        { name: "Ibarra",    basePace: 56 }, { name: "Juarez",    basePace: 56 },
+        { name: "Kovak",     basePace: 57 }, { name: "Lima",      basePace: 57 },
+        { name: "Marin",     basePace: 57 }, { name: "Neri",      basePace: 58 },
+        { name: "Oliva",     basePace: 58 }, { name: "Piana",     basePace: 58 },
+        { name: "Quintero",  basePace: 59 }, { name: "Rossi",     basePace: 59 },
+        { name: "Soto",      basePace: 60 }
     ],
-    rally: [
-        { name: "Ovier",     basePace: 95 },
-        { name: "Lieb",      basePace: 96 },
-        { name: "Evano",     basePace: 97 },
-        { name: "Nouvella",  basePace: 96 },
-        { name: "Romanera",  basePace: 95 },
-        { name: "Formaux",   basePace: 98 },
-        { name: "Lappo",     basePace: 98 },
-        { name: "Solbeck",   basePace: 99 },
-    ],
+    rally: Array.from({ length: 30 }, (_, i) => ({ name: `RivalR${i+1}`, basePace: 92 + (i % 6) })),
     formula: [
-        { name: "Lanston",   basePace: 68 },
-        { name: "Velstra",   basePace: 67 },
-        { name: "Laclair",   basePace: 69 },
-        { name: "Seno",      basePace: 68 },
-        { name: "Shumack",   basePace: 70 },
-        { name: "Proth",     basePace: 69 },
-        { name: "Noris",     basePace: 70 },
-        { name: "Piartri",   basePace: 71 },
+        { name: "Aurelli",  basePace: 66 }, { name: "Bianchi",  basePace: 66 },
+        { name: "Capri",    basePace: 67 }, { name: "D'Amico",  basePace: 67 },
+        { name: "Engel",    basePace: 68 }, { name: "Falk",     basePace: 68 },
+        { name: "Gallo",    basePace: 69 }, { name: "Hato",     basePace: 69 },
+        { name: "Ives",     basePace: 69 }, { name: "Juno",     basePace: 70 },
+        { name: "Kraus",    basePace: 70 }, { name: "Lefevre",  basePace: 70 },
+        { name: "Marek",    basePace: 71 }, { name: "Nero",     basePace: 71 },
+        { name: "Ortega",   basePace: 71 }, { name: "Pons",     basePace: 72 },
+        { name: "Quinn",    basePace: 72 }, { name: "Riga",     basePace: 72 },
+        { name: "Sarto",    basePace: 73 }
     ]
 };
 
